@@ -1,0 +1,13 @@
+{
+  "name": "hallmark-bingo",
+  "version": "1.0.0",
+  "description": "Generate Hallmark Trope Bingo Cards",
+  "main": "generate-bingo.js",
+  "scripts": {
+    "generate": "node generate-bingo.js"
+  },
+  "dependencies": {
+    "pdfkit": "^0.14.0"
+  }
+}
+
