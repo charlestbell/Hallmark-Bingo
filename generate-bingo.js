@@ -23,10 +23,21 @@ const items = lines.map((line) => {
   return line.replace(/^\d+\.\s*/, "").trim();
 });
 
+// Validate we have enough items
+const SQUARES_NEEDED = 25; // 5x5 grid = 25 squares
+const OTHER_SQUARES_NEEDED = 24; // 25 total - 1 center = 24
+
+if (items.length < SQUARES_NEEDED) {
+  console.error(
+    `Error: Need at least ${SQUARES_NEEDED} items, but only found ${items.length} items in source.txt`
+  );
+  process.exit(1);
+}
+
 // Item #1 (index 0) is the center square
 const centerItem = items[0];
-// Items #2-39 (indices 1-38) are for the other squares
-const otherItems = items.slice(1, 39); // items 2-39
+// Items #2 onwards (indices 1+) are for the other squares
+const otherItems = items.slice(1);
 
 // Function to shuffle array
 function shuffleArray(array) {
@@ -40,9 +51,9 @@ function shuffleArray(array) {
 
 // Function to generate a unique bingo card
 function generateBingoCard(cardNumber) {
-  // Select 24 random items from the 38 available (items #2-39)
+  // Select 24 random items from the available items (items #2 onwards)
   const shuffled = shuffleArray(otherItems);
-  const selectedItems = shuffled.slice(0, 24);
+  const selectedItems = shuffled.slice(0, OTHER_SQUARES_NEEDED);
 
   // Create 5x5 grid
   const grid = [];
@@ -76,15 +87,27 @@ function createBingoCardPDF(cardNumber, grid) {
   );
   doc.pipe(fs.createWriteStream(filename));
 
-  // Title - larger text
-  doc
-    .fontSize(36)
-    .font("Helvetica-Bold")
-    .text("Hallmark Trope", { align: "center" });
+  // Add background image (if it exists) - placed first so it appears behind all content
+  const backgroundPath = path.join(__dirname, "Background.png");
+  if (fs.existsSync(backgroundPath)) {
+    const pageWidth = doc.page.width;
+    const pageHeight = doc.page.height;
+    // Draw background image to cover the entire page
+    doc.image(backgroundPath, 0, 0, {
+      width: pageWidth,
+      height: pageHeight,
+    });
+  }
 
-  doc.fontSize(48).font("Helvetica-Bold").text("Bingo", { align: "center" });
+  // Title - commented out since it's in the background image
+  // doc
+  //   .fontSize(36)
+  //   .font("Helvetica-Bold")
+  //   .text("Hallmark Trope", { align: "center" });
 
-  doc.moveDown(2);
+  // doc.fontSize(48).font("Helvetica-Bold").text("Bingo", { align: "center" });
+
+  doc.moveDown(14);
 
   // Calculate grid dimensions
   const pageWidth =
