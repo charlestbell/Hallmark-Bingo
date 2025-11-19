@@ -78,7 +78,7 @@ function generateBingoCard(cardNumber) {
 function createBingoCardPDF(cardNumber, grid) {
   const doc = new PDFDocument({
     size: "LETTER",
-    margins: { top: 50, bottom: 50, left: 50, right: 50 },
+    margins: { top: 10, bottom: 10, left: 10, right: 10 },
   });
 
   const filename = path.join(
@@ -107,15 +107,25 @@ function createBingoCardPDF(cardNumber, grid) {
 
   // doc.fontSize(48).font("Helvetica-Bold").text("Bingo", { align: "center" });
 
-  doc.moveDown(14);
+  // Calculate grid dimensions with thin borders on all sides
+  const borderSize = 20;
+  const pageWidth = doc.page.width;
+  const pageHeight = doc.page.height;
 
-  // Calculate grid dimensions
-  const pageWidth =
-    doc.page.width - doc.page.margins.left - doc.page.margins.right;
-  const gridSize = Math.min(pageWidth * 0.9, 450);
+  // Available space after borders
+  const availableWidth = pageWidth - 2 * borderSize;
+  const availableHeight = pageHeight - 2 * borderSize;
+
+  // Use the smaller dimension to ensure square grid fits
+  const gridSize = Math.min(availableWidth, availableHeight);
   const cellSize = gridSize / 5;
-  const startX = (doc.page.width - gridSize) / 2;
-  let startY = doc.y;
+
+  // Vertical offset to adjust grid position (72 points = 1 inch)
+  const verticalOffset = 88;
+
+  // Center the grid with 1/4" minimum borders (centered if larger borders needed)
+  const startX = (pageWidth - gridSize) / 2;
+  const startY = (pageHeight - gridSize) / 2 + verticalOffset;
 
   // Draw grid
   for (let row = 0; row < 5; row++) {
@@ -172,7 +182,7 @@ console.log("Generating 15 unique bingo cards...");
 // Store used combinations to ensure uniqueness
 const usedCards = new Set();
 
-for (let i = 1; i <= 15; i++) {
+for (let i = 1; i <= 20; i++) {
   let card;
   let cardKey;
   let attempts = 0;
