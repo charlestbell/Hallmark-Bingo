@@ -74,19 +74,8 @@ function generateBingoCard(cardNumber) {
   return grid;
 }
 
-// Function to create PDF for a bingo card
-function createBingoCardPDF(cardNumber, grid) {
-  const doc = new PDFDocument({
-    size: "LETTER",
-    margins: { top: 10, bottom: 10, left: 10, right: 10 },
-  });
-
-  const filename = path.join(
-    outputDir,
-    `bingo-card-${cardNumber.toString().padStart(2, "0")}.pdf`
-  );
-  doc.pipe(fs.createWriteStream(filename));
-
+// Function to draw a bingo card on the provided PDF document
+function drawBingoCardPage(doc, grid) {
   // Add background image (if it exists) - placed first so it appears behind all content
   const backgroundPath = path.join(__dirname, "Background.png");
   if (fs.existsSync(backgroundPath)) {
@@ -152,8 +141,8 @@ function createBingoCardPDF(cardNumber, grid) {
       const textHeight = cellSize - padding * 2;
 
       // Calculate text height to properly center vertically
-      const fontSize = 9;
-      doc.fontSize(fontSize).font("Helvetica-Bold");
+      const fontSize = 11;
+      doc.font("Helvetica-Bold").fontSize(fontSize);
 
       // Get the height of wrapped text
       const lines = doc.heightOfString(text, { width: textWidth });
@@ -164,20 +153,29 @@ function createBingoCardPDF(cardNumber, grid) {
       const textStartY = centerY - lines / 2;
 
       // Draw centered text
-      doc.fillColor("black").text(text, x + padding, textStartY, {
-        width: textWidth,
-        align: "center",
-      });
+      doc
+        .fillColor("black")
+        .font("Helvetica-Bold")
+        .text(text, x + padding, textStartY, {
+          width: textWidth,
+          align: "center",
+        });
     }
   }
 
-  doc.end();
-
-  return filename;
+  return doc;
 }
 
-// Generate 15 unique bingo cards
-console.log("Generating 15 unique bingo cards...");
+// Generate 20 unique bingo cards into a single multipage PDF
+console.log("Generating 20 unique bingo cards...");
+
+const combinedFilename = path.join(outputDir, "bingo-cards.pdf");
+const combinedStream = fs.createWriteStream(combinedFilename);
+const doc = new PDFDocument({
+  size: "LETTER",
+  margins: { top: 10, bottom: 10, left: 10, right: 10 },
+});
+doc.pipe(combinedStream);
 
 // Store used combinations to ensure uniqueness
 const usedCards = new Set();
@@ -210,8 +208,13 @@ for (let i = 1; i <= 20; i++) {
 
   usedCards.add(cardKey);
 
-  const filename = createBingoCardPDF(i, card);
-  console.log(`Created ${filename}`);
+  if (i > 1) {
+    doc.addPage();
+  }
+  drawBingoCardPage(doc, card);
+  console.log(`Added card ${i.toString().padStart(2, "0")} to combined PDF`);
 }
 
-console.log("All 15 bingo cards generated successfully!");
+doc.end();
+
+console.log(`All 20 bingo cards generated in ${combinedFilename}`);
